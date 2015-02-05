@@ -1,0 +1,141 @@
+LindaEx
+=======
+
+Linda-style tuple spaces for Elixir. See [1], [2] for more information about
+the Linda model. In short: there is an area called a 'tuple space' where
+processes can post messages, data, in the form of tuples. These tuples can be
+retrieved by other processes by the process of matching templates against the
+tuples. Useful for writing concurrent programs.
+
+
+TODO
+====
+
+- Allow duplicate tuples
+- Make template translation recursive?
+
+
+Config
+======
+
+Spaces can be added using Mix.Config. For example,
+
+    use Mix.Config
+
+    config :lindaex,
+        spaces: [:inner_space, :outer_space]
+
+will create two spaces, named :inner_space and :outer_space, when the
+application is started.
+
+
+Usage
+=====
+
+Documentation can be generated using ExDoc:
+
+    $ mix deps.get
+
+    $ mix docs
+
+All functions take the space they operate on as the first argument. The read*,
+take* and update functions take a template as the second argument, more info
+about templates below. Templates are matched against the tuples in the space
+to determine which tuples are affected by the function call.
+
+Examples:
+
+    LindaEx.write :flaugnarde, {:dog, "Éclaire"}
+
+writes a tuple to the space called :flaugnarde (dupicates not allowed),
+
+    LindaEx.read :flaugnarde, {:cat, "Noir", :"$integer"}
+
+returns a matching tuple without removing it from the space, and
+
+    LindaEx.take :flaugnarde, {:squirrel, "Kuu-sama", :_, :_}
+
+returns a tuple and removes it from the space.
+
+In original Linda terminology, write corresponds to out, read to rd and write
+to in.
+
+read and take accept an optional third argument, with the value :block or
+:noblock. :block, the default, causes the function call to block until a tuple
+that matches the template is written to the space. :noblock causes the function
+to return nil if no matching tuple can be found.
+
+There are also read_all and take_all methods. They return a list of all
+matching tuples in the space, and otherwise behave like read and take
+respectively.
+
+The update function takes a fun in addition to the template, using the fun to
+transform a matching tuple.
+
+The count function returns the number of tuples in the space.
+
+
+Templates
+=========
+
+The read*, take* and update functions accept two different kind of templates.
+
+The first kind is the Erlang match_spec[3]. These can become quite ugly and
+unwieldy. They are also more powerful than what is actually required by the
+Linda model.
+
+The second kind is a standard tuple, which may contain type constraints and
+wildcards. Type constraints are atoms of the form :"$<TYPE>", where <TYPE> is
+the type to match: int, string, list etc. For a full list of available types,
+see the atom_to_guard/1 function in lib/lindaex/tuple_space.ex. All (most?)
+of Elixir's is_* functions have a corresponding type constraint. The atom :_
+functions as a wildcard, matching anything.
+
+The single atom :_ is also accepted, and matches any tuple in the space.
+
+For example, if the space has the following tuples:
+
+    A = {:a, "Katja-sama"}
+    B = {:b, 11}
+
+then the template
+
+    {:a, :"string"}
+
+will match tuple A,
+
+    {:b, :"$int"}
+
+will match tuple B,
+
+    {:_, :_}
+
+will match any tuple of arity 2, thus matching both A and B, and
+
+    :_
+
+will match any tuple in the space.
+
+Tuple templates are translated to match_specs internally. This translation is
+*not* recursive (for now), so type constraints can't be used in nested
+containers inside templates. (Wildcards should work, though.) This also means
+that atoms of the form :"$<NUMBER>" should be avoided, since those are used
+as variable in match_specs. Again, non-nested use is OK, nested is not (yet).
+
+
+Licence
+=======
+
+Copyright © 2015 Ookami Kenrou <ookamikenrou@gmail.com>
+This work is free. You can redistribute it and/or modify it under the terms of
+the Do What The Fuck You Want To Public License, Version 2, as published by
+Sam Hocevar. See the LICENSE file or [4] for more details.
+
+
+[1] https://en.wikipedia.org/wiki/Linda_(coordination_language)
+[2] http://c2.com/cgi/wiki?TupleSpace
+[3] http://www.erlang.org/doc/apps/erts/match_spec.html
+[4] http://www.wtfpl.net/
+
+Theme song: https://www.youtube.com/watch?v=YP8Z-uXkzGo
+
