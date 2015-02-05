@@ -65,7 +65,7 @@ read and take accept an optional third argument, with the value :block or
 that matches the template is written to the space. :noblock causes the function
 to return nil if no matching tuple can be found.
 
-There are also read_all and take_all methods. They return a list of all
+There are also read_all and take_all functions. They return a list of all
 matching tuples in the space, and otherwise behave like read and take
 respectively.
 
@@ -100,7 +100,7 @@ For example, if the space has the following tuples:
 
 then the template
 
-    {:a, :"string"}
+    {:a, :"$string"}
 
 will match tuple A,
 
@@ -120,7 +120,7 @@ Tuple templates are translated to match_specs internally. This translation is
 *not* recursive (for now), so type constraints can't be used in nested
 containers inside templates. (Wildcards should work, though.) This also means
 that atoms of the form :"$<NUMBER>" should be avoided, since those are used
-as variable in match_specs. Again, non-nested use is OK, nested is not (yet).
+as variables in match_specs. Again, non-nested use is OK, nested is not (yet).
 
 
 Licence
